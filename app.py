@@ -4,108 +4,117 @@ import anthropic
 # 1. Page Config
 st.set_page_config(page_title="Review Responder", page_icon="✨", layout="centered")
 
-# 2. Session State Management (To switch views)
+# 2. Session State
 if "page" not in st.session_state:
     st.session_state.page = "home"
 if "reply" not in st.session_state:
     st.session_state.reply = ""
 
-# 3. THE STYLING (Pixel Perfect Match)
+# 3. THE "PIXEL PERFECT" CSS
 st.markdown("""
 <style>
-    /* GLOBAL RESET */
+    /* GLOBAL CLEANUP */
     .stApp {
         background-color: #FFFFFF !important;
     }
     .block-container {
-        padding-top: 3rem !important;
+        max-width: 680px !important;
+        padding-top: 4rem !important;
         padding-bottom: 2rem !important;
-        max-width: 700px !important;
     }
     
-    /* HIDE CHROME */
-    header, footer, #MainMenu {display: none !important;}
+    /* REMOVE THE UGLY FORM BORDER */
+    [data-testid="stForm"] {
+        border: 0px solid transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
 
-    /* HEADERS */
+    /* TEXT STYLING */
     h1 {
         font-family: 'Inter', sans-serif;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         text-align: center !important;
-        font-size: 2.2rem !important;
+        font-size: 2.5rem !important;
         color: #000000 !important;
-        margin-bottom: 0.5rem !important;
+        padding-bottom: 0px !important;
     }
     p {
         text-align: center !important;
-        color: #64748B !important;
+        color: #666666 !important;
         font-size: 1rem !important;
+        margin-bottom: 2rem !important;
     }
 
-    /* INPUT FIELDS (Clean Borders) */
+    /* INPUT FIELDS (Clean & Soft) */
     .stTextArea textarea, .stTextInput input {
         background-color: #FFFFFF !important;
-        border: 1px solid #E2E8F0 !important;
+        border: 1px solid #E5E7EB !important; /* Very light gray */
         border-radius: 8px !important;
-        padding: 12px !important;
+        color: #111827 !important;
         font-size: 15px !important;
-        color: #1E293B !important;
+        padding: 12px !important;
         box-shadow: none !important;
     }
     .stTextArea textarea:focus, .stTextInput input:focus {
-        border-color: #818CF8 !important; /* Periwinkle Focus */
+        border-color: #6366F1 !important; /* Periwinkle focus */
+        box-shadow: 0 0 0 1px #6366F1 !important;
     }
 
-    /* RADIO BUTTONS (The Toggle Look) */
+    /* RADIO BUTTONS (The "Card" Look) */
     div[role="radiogroup"] {
-        justify-content: center;
         display: flex;
+        justify-content: center; /* Center them */
         gap: 12px;
         width: 100%;
+        margin-top: 10px;
     }
+    
+    /* The individual option container */
     div[role="radiogroup"] label {
         background-color: #FFFFFF !important;
-        border: 1px solid #E2E8F0 !important;
+        border: 1px solid #E5E7EB !important;
         border-radius: 8px !important;
-        padding: 10px 32px !important; /* Wide padding */
-        color: #64748B !important;
-        font-weight: 500 !important;
+        padding: 12px 24px !important;
+        width: auto !important;
+        flex-grow: 0 !important; /* Don't stretch */
         transition: all 0.2s;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    /* When selected (Streamlit adds a generic class, but we rely on primaryColor ring usually. 
-       We add hover effects to mimic the active feel) */
+    
+    /* Hover effect */
     div[role="radiogroup"] label:hover {
-        border-color: #818CF8 !important;
-        color: #818CF8 !important;
+        border-color: #6366F1 !important;
+        color: #6366F1 !important;
     }
 
-    /* PRIMARY BUTTON (The "Generate" & "Reply to another" button) */
+    /* THE BLUE BUTTON (Exact Match) */
     div.stButton > button {
-        background-color: #818CF8 !important; /* That Soft Blue/Purple */
+        background-color: #6366F1 !important; /* Periwinkle Blue */
         color: white !important;
         border: none !important;
         border-radius: 8px !important;
-        padding: 12px 24px !important;
+        padding: 12px 30px !important;
+        font-size: 16px !important;
         font-weight: 500 !important;
-        width: 200px !important; /* Fixed width like mockup */
-        margin: 0 auto !important; /* Center it */
+        margin: 20px auto 0px auto !important; /* Center horizontally */
         display: block !important;
+        width: 200px !important;
+        box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3) !important;
     }
     div.stButton > button:hover {
-        background-color: #6366F1 !important;
+        background-color: #4F46E5 !important; /* Darker on hover */
+        transform: translateY(-1px);
     }
-
-    /* RESULT BOX */
-    .result-box {
-        background-color: #F8FAFC; /* Very light gray/blue */
-        border: 1px solid #F1F5F9;
-        border-radius: 12px;
-        padding: 24px;
-        color: #334155;
-        font-size: 16px;
-        line-height: 1.6;
-        margin-top: 20px;
-        margin-bottom: 40px;
+    div.stButton > button:active {
+        transform: translateY(0px);
     }
+    
+    /* Hide the Streamlit footer/header */
+    header, footer, #MainMenu {display: none !important;}
 
 </style>
 """, unsafe_allow_html=True)
@@ -114,28 +123,28 @@ st.markdown("""
 try:
     client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
 except:
-    pass # Error handled gracefully in UI if needed
+    pass
 
-# 5. VIEW 1: THE INPUT FORM
+# 5. UI LOGIC
 if st.session_state.page == "home":
     
-    st.title("Review responder")
-    st.markdown("Paste a review below to generate a professional reply.")
-    
-    st.write("") # Spacer
+    # Custom Header (Centered)
+    st.markdown("<h1>Review responder</h1>", unsafe_allow_html=True)
+    st.markdown("<p>Paste a review below to generate a professional reply.</p>", unsafe_allow_html=True)
 
     with st.form("main_form", clear_on_submit=False):
+        
         # Review Input
         review_text = st.text_area(
             "Review",
-            height=180, 
+            height=160, 
             placeholder="Paste the customer review here...",
             label_visibility="collapsed"
         )
         
         st.write("") # Spacer
         
-        # Business Name
+        # Business Name Input
         business_name = st.text_input(
             "Business Name", 
             placeholder="Add your business name (optional)",
@@ -144,11 +153,10 @@ if st.session_state.page == "home":
         
         st.write("") # Spacer
         
-        # Tone Selector - Centered text logic
-        st.markdown("<p style='text-align: center; margin-bottom: 10px;'>What tone would you like to reply with?</p>", unsafe_allow_html=True)
+        # Tone Header
+        st.markdown("<p style='margin-bottom: 8px !important;'>What tone would you like to reply with?</p>", unsafe_allow_html=True)
         
-        # Using columns to center the radio group visually if needed, 
-        # but CSS above handles the flex centering.
+        # Tone Selection
         tone = st.radio(
             "Tone", 
             ["Grateful", "Polite & Firm", "Short"], 
@@ -156,14 +164,10 @@ if st.session_state.page == "home":
             label_visibility="collapsed"
         )
         
-        st.write("") # Spacer
-        st.write("") # Spacer
-        
-        # The Button
+        # Submit Button
         submitted = st.form_submit_button("Generate reply")
         
         if submitted and review_text:
-            # API Call
             try:
                 system_prompt = f"""
                 You are a business owner. Write a response to a review.
@@ -180,36 +184,39 @@ if st.session_state.page == "home":
                     messages=[{"role": "user", "content": review_text}]
                 )
                 
-                # Save to session and switch page
                 st.session_state.reply = message.content[0].text
                 st.session_state.page = "result"
-                st.rerun() # Force reload to show result page
+                st.rerun()
                 
             except Exception as e:
                 st.error(f"Error: {e}")
 
-# 6. VIEW 2: THE RESULT
 elif st.session_state.page == "result":
     
-    st.title("Review responder")
-    st.markdown("Paste a review below to generate a professional reply.")
+    # Header
+    st.markdown("<h1>Review responder</h1>", unsafe_allow_html=True)
+    st.markdown("<p>Paste a review below to generate a professional reply.</p>", unsafe_allow_html=True)
     
-    # We show disabled inputs to mimic the 'Ghost' state of the previous screen
-    # or we can just show the result clean as per mockup.
-    # Mockup 2 shows the inputs are GONE, and just the result is there? 
-    # Actually, Mockup 2 shows inputs at top (filled) and result below.
-    # Let's stick to the cleaner "Result View" for now.
+    # Result Area
+    st.markdown("<h2 style='text-align: center; font-size: 1.8rem; margin-top: 1rem;'>Your reply</h2>", unsafe_allow_html=True)
     
-    st.markdown("<h2 style='text-align: center; font-size: 1.8rem; margin-top: 2rem;'>Your reply</h2>", unsafe_allow_html=True)
-    
-    # Custom HTML box for the result to match the blue bg
+    # The Blue Result Box
     st.markdown(f"""
-    <div class="result-box">
+    <div style="
+        background-color: #F8FAFC; 
+        border: 1px solid #EEF2FF; 
+        border-radius: 12px; 
+        padding: 30px; 
+        color: #334155; 
+        font-size: 16px; 
+        line-height: 1.6; 
+        margin: 20px 0 40px 0;
+        text-align: left;">
         {st.session_state.reply}
     </div>
     """, unsafe_allow_html=True)
     
-    # The "Go Back" Button
+    # Back Button
     if st.button("Reply to another"):
         st.session_state.page = "home"
         st.session_state.reply = ""
