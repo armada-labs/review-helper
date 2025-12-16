@@ -1,77 +1,77 @@
 import streamlit as st
 import anthropic
 
-# 1. Page Config (Browser Tab)
+# 1. Page Config
 st.set_page_config(
     page_title="Review Responder",
     page_icon="✨",
     layout="centered"
 )
 
-# 2. THE STYLING (The Magic Part)
-# We inject CSS to override Streamlit's defaults.
+# 2. THE STYLING (Light Mode "Clean Search" Look)
 st.markdown("""
 <style>
-    /* Force a dark background color to match the reference */
+    /* Main Background - Soft Gray like the reference image */
     .stApp {
-        background-color: #0E1117;
-        color: #FAFAFA;
+        background-color: #F3F4F6;
+        color: #1F2937; /* Dark Gray text */
     }
 
-    /* 1. ROUNDED TEXT AREA (The Input) */
-    .stTextArea textarea {
-        background-color: #262730;
-        color: #ffffff;
-        border-radius: 12px; /* Rounded corners */
-        border: 1px solid #41424C; /* Subtle border */
+    /* INPUTS: White cards with subtle borders */
+    .stTextArea textarea, .stTextInput input {
+        background-color: #FFFFFF !important;
+        color: #111827 !important;
+        border: 1px solid #E5E7EB;
+        border-radius: 12px;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
-    .stTextArea textarea:focus {
-        border-color: #4CAF50; /* Green glow on focus */
-        box-shadow: 0 0 0 1px #4CAF50;
+    
+    /* Focus state for inputs */
+    .stTextArea textarea:focus, .stTextInput input:focus {
+        border-color: #24A19C;
+        box-shadow: 0 0 0 2px rgba(36, 161, 156, 0.2);
     }
 
-    /* 2. THE BUTTON (No more Red!) */
+    /* THE BUTTON: Teal, Pill-shaped, and Clean */
     div.stButton > button:first-child {
-        background-color: #24A19C; /* Calm Teal color */
+        background-color: #24A19C;
         color: white;
-        border-radius: 20px; /* Pill shape */
+        border-radius: 50px; /* Full pill shape */
         border: none;
-        padding: 10px 24px;
+        padding: 12px 28px;
         font-weight: 600;
-        letter-spacing: 0.5px;
-        transition: all 0.3s ease;
-        width: 100%; /* Full width for mobile friendliness */
+        box-shadow: 0 4px 6px -1px rgba(36, 161, 156, 0.4);
+        transition: all 0.2s;
+        width: 100%;
     }
     
     div.stButton > button:first-child:hover {
-        background-color: #1B7F7A; /* Darker teal on hover */
-        transform: translateY(-2px); /* Slight lift effect */
-        box-shadow: 0 4px 12px rgba(36, 161, 156, 0.3);
+        background-color: #1D8F8A;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 8px -1px rgba(36, 161, 156, 0.5);
     }
 
-    /* 3. RADIO BUTTONS (The Tones) */
-    /* Make them look like cards or cleaner text */
+    /* RADIO BUTTONS (The Tones) - Light Cards */
     div[role="radiogroup"] > label {
-        background-color: #262730;
-        padding: 8px 16px;
+        background-color: #FFFFFF;
+        padding: 10px 20px;
         border-radius: 8px;
-        margin-right: 8px;
-        border: 1px solid #41424C;
-        transition: border-color 0.2s;
+        border: 1px solid #E5E7EB;
+        color: #374151;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        margin-right: 10px;
     }
     div[role="radiogroup"] > label:hover {
         border-color: #24A19C;
+        color: #24A19C;
+    }
+    
+    /* Result Box Container */
+    .element-container {
+        margin-bottom: 1rem;
     }
 
-    /* 4. RESULT BOX */
-    .stAlert {
-        background-color: #262730;
-        border: 1px solid #41424C;
-        border-radius: 12px;
-        color: #FAFAFA;
-    }
-
-    /* Hide the default Streamlit main menu and footer for a cleaner look */
+    /* Hide standard Streamlit header/footer */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -89,8 +89,8 @@ except Exception as e:
 st.title("✨ Review Responder")
 st.markdown(
     """
-    <p style='color: #9CA3AF; font-size: 1.1rem; margin-bottom: 2rem;'>
-    Paste a review below from any platform. I'll write a calm, professional reply for you.
+    <p style='color: #4B5563; font-size: 1.1rem; margin-bottom: 2rem;'>
+    Paste a review below. I'll write a calm, professional reply for you.
     </p>
     """, 
     unsafe_allow_html=True
@@ -98,11 +98,12 @@ st.markdown(
 
 # 5. The Input Form
 with st.form("review_form"):
+    # We use a white background card approach for the input
     review_text = st.text_area(
-        "Customer Review", # Label is required but we can hide it with CSS if you prefer, keeping it for accessibility
-        height=120, 
+        "Review",
+        height=150, 
         placeholder="Paste the review text here...",
-        label_visibility="collapsed" # Hides the label for that "clean search bar" look
+        label_visibility="collapsed"
     )
     
     st.markdown("#### Choose your vibe:")
@@ -113,18 +114,16 @@ with st.form("review_form"):
         label_visibility="collapsed"
     )
     
-    # Simple spacer
-    st.write("")
+    st.write("") # Spacer
     
     business_name = st.text_input(
-        "Business Name (Optional)", 
-        placeholder="Your Business Name (e.g. Andy's Cafe)",
+        "Business Name", 
+        placeholder="Your Business Name (Optional)",
         label_visibility="collapsed"
     )
     
     st.write("") # Spacer
     
-    # The Button (Styled via CSS above)
     submitted = st.form_submit_button("Generate Reply")
 
 # 6. The Output
@@ -139,7 +138,7 @@ if submitted and review_text:
             
             Rules:
             - Be polite, empathetic, and professional.
-            - Do NOT mention specific platform names unless the user explicitly mentioned it.
+            - Do NOT mention specific platform names.
             - Keep it under 60 words.
             - Return ONLY the response text.
             """
@@ -156,10 +155,14 @@ if submitted and review_text:
             
             reply = message.content[0].text
             
-            st.markdown("---") # Thin divider
+            st.markdown("---") 
             st.markdown("### ✅ Your Draft")
             
-            # We use st.code because it is the only way to get a 'Copy' button natively
+            # Using 'st.success' gives a nice green/white box in light mode
+            st.success(reply, icon="✍️")
+            
+            # The Copy Button (Native)
+            st.caption("Copy the text below:")
             st.code(reply, language="text")
             
         except Exception as e:
