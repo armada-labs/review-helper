@@ -8,70 +8,79 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. THE STYLING (Light Mode "Clean Search" Look)
+# 2. THE STYLING (Fixed Light Mode)
 st.markdown("""
 <style>
-    /* Main Background - Soft Gray like the reference image */
+    /* Force the main app background to soft gray */
     .stApp {
-        background-color: #F3F4F6;
-        color: #1F2937; /* Dark Gray text */
+        background-color: #F3F4F6 !important;
     }
 
-    /* INPUTS: White cards with subtle borders */
+    /* TEXT AREAS & INPUTS */
+    /* Force white background and dark text */
     .stTextArea textarea, .stTextInput input {
         background-color: #FFFFFF !important;
-        color: #111827 !important;
-        border: 1px solid #E5E7EB;
-        border-radius: 12px;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        color: #111827 !important; /* Dark text */
+        caret-color: #111827; /* Dark cursor */
+        border: 1px solid #E5E7EB !important;
+        border-radius: 12px !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
     }
     
-    /* Focus state for inputs */
+    /* Input placeholder text color */
+    .stTextArea textarea::placeholder, .stTextInput input::placeholder {
+        color: #9CA3AF !important; 
+    }
+
+    /* Focus state */
     .stTextArea textarea:focus, .stTextInput input:focus {
-        border-color: #24A19C;
-        box-shadow: 0 0 0 2px rgba(36, 161, 156, 0.2);
+        border-color: #24A19C !important;
+        box-shadow: 0 0 0 2px rgba(36, 161, 156, 0.2) !important;
     }
 
-    /* THE BUTTON: Teal, Pill-shaped, and Clean */
+    /* LABELS (The 'Choose your vibe' text) */
+    .stMarkdown p, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
+        color: #1F2937 !important;
+    }
+    
+    /* RADIO BUTTONS (The Tone Cards) */
+    div[role="radiogroup"] label {
+        background-color: #FFFFFF !important;
+        color: #374151 !important;
+        border: 1px solid #E5E7EB !important;
+        padding: 10px 20px !important;
+        border-radius: 8px !important;
+        margin-right: 8px !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+    div[role="radiogroup"] label:hover {
+        border-color: #24A19C !important;
+        color: #24A19C !important;
+    }
+
+    /* THE BUTTON (Teal & Pill Shaped) */
     div.stButton > button:first-child {
-        background-color: #24A19C;
-        color: white;
-        border-radius: 50px; /* Full pill shape */
-        border: none;
-        padding: 12px 28px;
-        font-weight: 600;
-        box-shadow: 0 4px 6px -1px rgba(36, 161, 156, 0.4);
-        transition: all 0.2s;
-        width: 100%;
+        background-color: #24A19C !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 50px !important;
+        padding: 12px 28px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 6px -1px rgba(36, 161, 156, 0.4) !important;
+        width: 100% !important;
     }
-    
     div.stButton > button:first-child:hover {
-        background-color: #1D8F8A;
+        background-color: #1D8F8A !important;
         transform: translateY(-1px);
-        box-shadow: 0 6px 8px -1px rgba(36, 161, 156, 0.5);
-    }
-
-    /* RADIO BUTTONS (The Tones) - Light Cards */
-    div[role="radiogroup"] > label {
-        background-color: #FFFFFF;
-        padding: 10px 20px;
-        border-radius: 8px;
-        border: 1px solid #E5E7EB;
-        color: #374151;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        margin-right: 10px;
-    }
-    div[role="radiogroup"] > label:hover {
-        border-color: #24A19C;
-        color: #24A19C;
     }
     
-    /* Result Box Container */
-    .element-container {
-        margin-bottom: 1rem;
+    /* Hide extra spacing */
+    .block-container {
+        padding-top: 3rem;
+        padding-bottom: 3rem;
     }
 
-    /* Hide standard Streamlit header/footer */
+    /* Hide standard elements */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -87,24 +96,20 @@ except Exception as e:
 
 # 4. The UI Layout
 st.title("✨ Review Responder")
-st.markdown(
-    """
-    <p style='color: #4B5563; font-size: 1.1rem; margin-bottom: 2rem;'>
-    Paste a review below. I'll write a calm, professional reply for you.
-    </p>
-    """, 
-    unsafe_allow_html=True
-)
+st.markdown("Paste a review below. I'll write a calm, professional reply for you.")
 
 # 5. The Input Form
 with st.form("review_form"):
-    # We use a white background card approach for the input
+    
+    # Input Area
     review_text = st.text_area(
-        "Review",
+        "Review content",
         height=150, 
         placeholder="Paste the review text here...",
         label_visibility="collapsed"
     )
+    
+    st.write("") # Spacer
     
     st.markdown("#### Choose your vibe:")
     tone = st.radio(
@@ -158,10 +163,8 @@ if submitted and review_text:
             st.markdown("---") 
             st.markdown("### ✅ Your Draft")
             
-            # Using 'st.success' gives a nice green/white box in light mode
             st.success(reply, icon="✍️")
             
-            # The Copy Button (Native)
             st.caption("Copy the text below:")
             st.code(reply, language="text")
             
