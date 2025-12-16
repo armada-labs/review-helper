@@ -1,5 +1,5 @@
 import streamlit as st
-from openai import OpenAI
+import anthropic
 
 # 1. Page Configuration
 st.set_page_config(
@@ -14,29 +14,23 @@ st.markdown("Paste a Google Review below, and I'll write a professional reply fo
 
 # 3. Securely load API Key (from Streamlit Secrets)
 try:
-    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-except:
-    st.error("No API Key found. This app is for demo purposes.")
+    # Note: We look for "ANTHROPIC_API_KEY" now
+    client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
+except Exception as e:
+    st.error("No API Key found. Please add ANTHROPIC_API_KEY to your secrets.")
     st.stop()
 
 # 4. The Input Form
 with st.form("review_form"):
-    # Input: The Customer's Review
     review_text = st.text_area("Paste the customer review here:", height=150, placeholder="e.g. The coffee was great but the service was a bit slow...")
-    
-    # Input: The Vibe
     tone = st.radio("Choose your tone:", ["🙏 Grateful & Professional", "😅 Apologetic & Reassuring", "⚡ Short & Sweet"], horizontal=True)
-    
-    # Input: Business Name (Optional)
     business_name = st.text_input("Your Business Name (Optional):", placeholder="e.g. Andy's Cafe")
-    
     submitted = st.form_submit_button("✨ Generate Reply")
 
-# 5. The Magic (AI Generation)
+# 5. The Magic (Claude Generation)
 if submitted and review_text:
-    with st.spinner("Drafting the perfect response..."):
+    with st.spinner("Asking Claude for the perfect response..."):
         try:
-            # The Prompt Engineering
             system_prompt = f"""
             You are a professional, friendly, and local business owner in Ealing, London.
             Write a response to a customer review.
@@ -50,20 +44,21 @@ if submitted and review_text:
             - Do not use hashtags.
             """
 
-            response = client.chat.completions.create(
-                model="gpt-4o-mini", # Cheap and fast
+            message = client.messages.create(
+                model="claude-3-haiku-20240307", # Fast and cheap model
+                max_tokens=300,
+                temperature=0.7,
+                system=system_prompt,
                 messages=[
-                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": review_text}
-                ],
-                temperature=0.7
+                ]
             )
             
-            reply = response.choices[0].message.content
+            reply = message.content[0].text
             
             # 6. The Output
             st.success("Here is your reply:")
-            st.code(reply, language=None) # formatted as code for one-click copy
+            st.code(reply, language=None)
             st.caption("Tip: Copy this and paste it straight into Google/Facebook.")
             
         except Exception as e:
