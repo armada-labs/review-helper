@@ -8,82 +8,93 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. THE STYLING (Fixed Light Mode)
+# 2. THE STYLING (Production Grade)
 st.markdown("""
 <style>
-    /* Force the main app background to soft gray */
+    /* 1. RESET & BASICS */
     .stApp {
-        background-color: #F3F4F6 !important;
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
     }
+    
+    /* Remove standard Streamlit top padding so it fits tight in an iframe */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 100% !important;
+    }
+    
+    /* HIDE HEADER/FOOTER */
+    header, footer, #MainMenu {visibility: hidden !important;}
 
-    /* TEXT AREAS & INPUTS */
-    /* Force white background and dark text */
+    /* 2. INPUT FIELDS (Clean, White, Blue Focus) */
     .stTextArea textarea, .stTextInput input {
         background-color: #FFFFFF !important;
-        color: #111827 !important; /* Dark text */
-        caret-color: #111827; /* Dark cursor */
-        border: 1px solid #E5E7EB !important;
-        border-radius: 12px !important;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-    }
-    
-    /* Input placeholder text color */
-    .stTextArea textarea::placeholder, .stTextInput input::placeholder {
-        color: #9CA3AF !important; 
-    }
-
-    /* Focus state */
-    .stTextArea textarea:focus, .stTextInput input:focus {
-        border-color: #24A19C !important;
-        box-shadow: 0 0 0 2px rgba(36, 161, 156, 0.2) !important;
-    }
-
-    /* LABELS (The 'Choose your vibe' text) */
-    .stMarkdown p, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
-        color: #1F2937 !important;
-    }
-    
-    /* RADIO BUTTONS (The Tone Cards) */
-    div[role="radiogroup"] label {
-        background-color: #FFFFFF !important;
-        color: #374151 !important;
-        border: 1px solid #E5E7EB !important;
-        padding: 10px 20px !important;
+        border: 1px solid #E2E8F0 !important;
         border-radius: 8px !important;
-        margin-right: 8px !important;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        color: #0F172A !important;
+        padding: 12px !important;
     }
-    div[role="radiogroup"] label:hover {
-        border-color: #24A19C !important;
-        color: #24A19C !important;
+    .stTextArea textarea:focus, .stTextInput input:focus {
+        border-color: #2563EB !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
     }
 
-    /* THE BUTTON (Teal & Pill Shaped) */
+    /* 3. RADIO BUTTONS (The "Card" Look) */
+    /* Container for the cards */
+    div[role="radiogroup"] {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    /* The individual cards */
+    div[role="radiogroup"] label {
+        background-color: #F8FAFC !important;
+        border: 1px solid #E2E8F0 !important;
+        padding: 10px 20px !important;
+        border-radius: 50px !important; /* Pill shape */
+        color: #64748B !important;
+        transition: all 0.2s ease;
+        margin-right: 0px !important;
+        cursor: pointer;
+    }
+    
+    /* Hover State */
+    div[role="radiogroup"] label:hover {
+        border-color: #2563EB !important;
+        color: #2563EB !important;
+        background-color: #EFF6FF !important;
+    }
+    
+    /* SELECTED STATE (We hijack the internal span to style the active card) */
+    /* Note: Streamlit doesn't expose a clean 'checked' class on the label, 
+       so we rely on the primaryColor config to handle the dot, 
+       and this CSS handles the general card feel. */
+
+    /* 4. THE CTA BUTTON (Welcoming Blue) */
     div.stButton > button:first-child {
-        background-color: #24A19C !important;
+        background-color: #2563EB !important; /* SaaS Blue */
         color: #FFFFFF !important;
         border: none !important;
-        border-radius: 50px !important;
-        padding: 12px 28px !important;
+        border-radius: 8px !important; /* Slightly rounded, professional */
+        padding: 14px 24px !important;
         font-weight: 600 !important;
-        box-shadow: 0 4px 6px -1px rgba(36, 161, 156, 0.4) !important;
+        font-size: 16px !important;
         width: 100% !important;
+        transition: background-color 0.2s;
     }
     div.stButton > button:first-child:hover {
-        background-color: #1D8F8A !important;
-        transform: translateY(-1px);
-    }
-    
-    /* Hide extra spacing */
-    .block-container {
-        padding-top: 3rem;
-        padding-bottom: 3rem;
+        background-color: #1D4ED8 !important; /* Darker blue on hover */
     }
 
-    /* Hide standard elements */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* 5. SUCCESS BOX */
+    .stAlert {
+        background-color: #EFF6FF !important; /* Very light blue */
+        border: 1px solid #DBEAFE !important;
+        color: #1E40AF !important;
+    }
+    
 </style>
 """, unsafe_allow_html=True)
 
@@ -96,16 +107,16 @@ except Exception as e:
 
 # 4. The UI Layout
 st.title("✨ Review Responder")
-st.markdown("Paste a review below. I'll write a calm, professional reply for you.")
+st.markdown("Paste a review below to generate a professional reply.")
 
 # 5. The Input Form
 with st.form("review_form"):
     
-    # Input Area
+    # Review Input
     review_text = st.text_area(
         "Review content",
         height=150, 
-        placeholder="Paste the review text here...",
+        placeholder="Paste the customer review here...",
         label_visibility="collapsed"
     )
     
@@ -121,6 +132,7 @@ with st.form("review_form"):
     
     st.write("") # Spacer
     
+    # Business Name
     business_name = st.text_input(
         "Business Name", 
         placeholder="Your Business Name (Optional)",
@@ -133,7 +145,7 @@ with st.form("review_form"):
 
 # 6. The Output
 if submitted and review_text:
-    with st.spinner("Writing..."):
+    with st.spinner("Drafting..."):
         try:
             system_prompt = f"""
             You are a professional business owner.
@@ -164,8 +176,6 @@ if submitted and review_text:
             st.markdown("### ✅ Your Draft")
             
             st.success(reply, icon="✍️")
-            
-            st.caption("Copy the text below:")
             st.code(reply, language="text")
             
         except Exception as e:
