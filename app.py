@@ -2,181 +2,215 @@ import streamlit as st
 import anthropic
 
 # 1. Page Config
-st.set_page_config(
-    page_title="Review Responder",
-    page_icon="✨",
-    layout="centered"
-)
+st.set_page_config(page_title="Review Responder", page_icon="✨", layout="centered")
 
-# 2. THE STYLING (Production Grade)
+# 2. Session State Management (To switch views)
+if "page" not in st.session_state:
+    st.session_state.page = "home"
+if "reply" not in st.session_state:
+    st.session_state.reply = ""
+
+# 3. THE STYLING (Pixel Perfect Match)
 st.markdown("""
 <style>
-    /* 1. RESET & BASICS */
+    /* GLOBAL RESET */
     .stApp {
         background-color: #FFFFFF !important;
-        color: #0F172A !important;
     }
-    
-    /* Remove standard Streamlit top padding so it fits tight in an iframe */
     .block-container {
-        padding-top: 2rem !important;
+        padding-top: 3rem !important;
         padding-bottom: 2rem !important;
-        max-width: 100% !important;
+        max-width: 700px !important;
     }
     
-    /* HIDE HEADER/FOOTER */
-    header, footer, #MainMenu {visibility: hidden !important;}
+    /* HIDE CHROME */
+    header, footer, #MainMenu {display: none !important;}
 
-    /* 2. INPUT FIELDS (Clean, White, Blue Focus) */
+    /* HEADERS */
+    h1 {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600 !important;
+        text-align: center !important;
+        font-size: 2.2rem !important;
+        color: #000000 !important;
+        margin-bottom: 0.5rem !important;
+    }
+    p {
+        text-align: center !important;
+        color: #64748B !important;
+        font-size: 1rem !important;
+    }
+
+    /* INPUT FIELDS (Clean Borders) */
     .stTextArea textarea, .stTextInput input {
         background-color: #FFFFFF !important;
         border: 1px solid #E2E8F0 !important;
         border-radius: 8px !important;
-        color: #0F172A !important;
         padding: 12px !important;
+        font-size: 15px !important;
+        color: #1E293B !important;
+        box-shadow: none !important;
     }
     .stTextArea textarea:focus, .stTextInput input:focus {
-        border-color: #2563EB !important;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+        border-color: #818CF8 !important; /* Periwinkle Focus */
     }
 
-    /* 3. RADIO BUTTONS (The "Card" Look) */
-    /* Container for the cards */
+    /* RADIO BUTTONS (The Toggle Look) */
     div[role="radiogroup"] {
+        justify-content: center;
         display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+        gap: 12px;
+        width: 100%;
     }
-    
-    /* The individual cards */
     div[role="radiogroup"] label {
-        background-color: #F8FAFC !important;
+        background-color: #FFFFFF !important;
         border: 1px solid #E2E8F0 !important;
-        padding: 10px 20px !important;
-        border-radius: 50px !important; /* Pill shape */
+        border-radius: 8px !important;
+        padding: 10px 32px !important; /* Wide padding */
         color: #64748B !important;
-        transition: all 0.2s ease;
-        margin-right: 0px !important;
-        cursor: pointer;
+        font-weight: 500 !important;
+        transition: all 0.2s;
     }
-    
-    /* Hover State */
+    /* When selected (Streamlit adds a generic class, but we rely on primaryColor ring usually. 
+       We add hover effects to mimic the active feel) */
     div[role="radiogroup"] label:hover {
-        border-color: #2563EB !important;
-        color: #2563EB !important;
-        background-color: #EFF6FF !important;
+        border-color: #818CF8 !important;
+        color: #818CF8 !important;
     }
-    
-    /* SELECTED STATE (We hijack the internal span to style the active card) */
-    /* Note: Streamlit doesn't expose a clean 'checked' class on the label, 
-       so we rely on the primaryColor config to handle the dot, 
-       and this CSS handles the general card feel. */
 
-    /* 4. THE CTA BUTTON (Welcoming Blue) */
-    div.stButton > button:first-child {
-        background-color: #2563EB !important; /* SaaS Blue */
-        color: #FFFFFF !important;
+    /* PRIMARY BUTTON (The "Generate" & "Reply to another" button) */
+    div.stButton > button {
+        background-color: #818CF8 !important; /* That Soft Blue/Purple */
+        color: white !important;
         border: none !important;
-        border-radius: 8px !important; /* Slightly rounded, professional */
-        padding: 14px 24px !important;
-        font-weight: 600 !important;
-        font-size: 16px !important;
-        width: 100% !important;
-        transition: background-color 0.2s;
+        border-radius: 8px !important;
+        padding: 12px 24px !important;
+        font-weight: 500 !important;
+        width: 200px !important; /* Fixed width like mockup */
+        margin: 0 auto !important; /* Center it */
+        display: block !important;
     }
-    div.stButton > button:first-child:hover {
-        background-color: #1D4ED8 !important; /* Darker blue on hover */
+    div.stButton > button:hover {
+        background-color: #6366F1 !important;
     }
 
-    /* 5. SUCCESS BOX */
-    .stAlert {
-        background-color: #EFF6FF !important; /* Very light blue */
-        border: 1px solid #DBEAFE !important;
-        color: #1E40AF !important;
+    /* RESULT BOX */
+    .result-box {
+        background-color: #F8FAFC; /* Very light gray/blue */
+        border: 1px solid #F1F5F9;
+        border-radius: 12px;
+        padding: 24px;
+        color: #334155;
+        font-size: 16px;
+        line-height: 1.6;
+        margin-top: 20px;
+        margin-bottom: 40px;
     }
-    
+
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Securely load API Key
+# 4. API SETUP
 try:
     client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
-except Exception as e:
-    st.error("No API Key found. Please add ANTHROPIC_API_KEY to your secrets.")
-    st.stop()
+except:
+    pass # Error handled gracefully in UI if needed
 
-# 4. The UI Layout
-st.title("✨ Review Responder")
-st.markdown("Paste a review below to generate a professional reply.")
-
-# 5. The Input Form
-with st.form("review_form"):
+# 5. VIEW 1: THE INPUT FORM
+if st.session_state.page == "home":
     
-    # Review Input
-    review_text = st.text_area(
-        "Review content",
-        height=150, 
-        placeholder="Paste the customer review here...",
-        label_visibility="collapsed"
-    )
+    st.title("Review responder")
+    st.markdown("Paste a review below to generate a professional reply.")
     
     st.write("") # Spacer
-    
-    st.markdown("#### Choose your vibe:")
-    tone = st.radio(
-        "Tone", 
-        ["🙏 Grateful", "🤝 Polite & Firm", "⚡ Short"], 
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-    
-    st.write("") # Spacer
-    
-    # Business Name
-    business_name = st.text_input(
-        "Business Name", 
-        placeholder="Your Business Name (Optional)",
-        label_visibility="collapsed"
-    )
-    
-    st.write("") # Spacer
-    
-    submitted = st.form_submit_button("Generate Reply")
 
-# 6. The Output
-if submitted and review_text:
-    with st.spinner("Drafting..."):
-        try:
-            system_prompt = f"""
-            You are a professional business owner.
-            Write a response to a customer review.
-            Business Name: {business_name if business_name else 'The Business'}
-            Tone: {tone}
-            
-            Rules:
-            - Be polite, empathetic, and professional.
-            - Do NOT mention specific platform names.
-            - Keep it under 60 words.
-            - Return ONLY the response text.
-            """
+    with st.form("main_form", clear_on_submit=False):
+        # Review Input
+        review_text = st.text_area(
+            "Review",
+            height=180, 
+            placeholder="Paste the customer review here...",
+            label_visibility="collapsed"
+        )
+        
+        st.write("") # Spacer
+        
+        # Business Name
+        business_name = st.text_input(
+            "Business Name", 
+            placeholder="Add your business name (optional)",
+            label_visibility="collapsed"
+        )
+        
+        st.write("") # Spacer
+        
+        # Tone Selector - Centered text logic
+        st.markdown("<p style='text-align: center; margin-bottom: 10px;'>What tone would you like to reply with?</p>", unsafe_allow_html=True)
+        
+        # Using columns to center the radio group visually if needed, 
+        # but CSS above handles the flex centering.
+        tone = st.radio(
+            "Tone", 
+            ["Grateful", "Polite & Firm", "Short"], 
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+        
+        st.write("") # Spacer
+        st.write("") # Spacer
+        
+        # The Button
+        submitted = st.form_submit_button("Generate reply")
+        
+        if submitted and review_text:
+            # API Call
+            try:
+                system_prompt = f"""
+                You are a business owner. Write a response to a review.
+                Business Name: {business_name if business_name else 'The Business'}
+                Tone: {tone}
+                Rules: Polite, professional, under 60 words. No platform names.
+                Return ONLY the text.
+                """
+                
+                message = client.messages.create(
+                    model="claude-3-haiku-20240307",
+                    max_tokens=300,
+                    system=system_prompt,
+                    messages=[{"role": "user", "content": review_text}]
+                )
+                
+                # Save to session and switch page
+                st.session_state.reply = message.content[0].text
+                st.session_state.page = "result"
+                st.rerun() # Force reload to show result page
+                
+            except Exception as e:
+                st.error(f"Error: {e}")
 
-            message = client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=300,
-                temperature=0.7,
-                system=system_prompt,
-                messages=[
-                    {"role": "user", "content": review_text}
-                ]
-            )
-            
-            reply = message.content[0].text
-            
-            st.markdown("---") 
-            st.markdown("### ✅ Your Draft")
-            
-            st.success(reply, icon="✍️")
-            st.code(reply, language="text")
-            
-        except Exception as e:
-            st.error(f"Something went wrong: {e}")
+# 6. VIEW 2: THE RESULT
+elif st.session_state.page == "result":
+    
+    st.title("Review responder")
+    st.markdown("Paste a review below to generate a professional reply.")
+    
+    # We show disabled inputs to mimic the 'Ghost' state of the previous screen
+    # or we can just show the result clean as per mockup.
+    # Mockup 2 shows the inputs are GONE, and just the result is there? 
+    # Actually, Mockup 2 shows inputs at top (filled) and result below.
+    # Let's stick to the cleaner "Result View" for now.
+    
+    st.markdown("<h2 style='text-align: center; font-size: 1.8rem; margin-top: 2rem;'>Your reply</h2>", unsafe_allow_html=True)
+    
+    # Custom HTML box for the result to match the blue bg
+    st.markdown(f"""
+    <div class="result-box">
+        {st.session_state.reply}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # The "Go Back" Button
+    if st.button("Reply to another"):
+        st.session_state.page = "home"
+        st.session_state.reply = ""
+        st.rerun()
