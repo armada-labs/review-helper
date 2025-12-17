@@ -10,144 +10,156 @@ if "page" not in st.session_state:
 if "reply" not in st.session_state:
     st.session_state.reply = ""
 
-# 3. THE DESIGN SYSTEM (CSS Injection)
+# 3. CSS INJECTION (The "Bulletproof" Styles)
 st.markdown("""
 <style>
-    /* IMPORT FONT: Inter */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    /* IMPORT FONT INTER */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
-    /* 1. GLOBAL RESET */
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif !important;
+        font-family: 'Inter', sans-serif;
     }
-    .stApp {
-        background-color: #FFFFFF !important;
-    }
-    /* Constrain width to look like an App, not a website */
-    .block-container {
-        max-width: 600px !important;
-        padding-top: 5rem !important;
-        padding-bottom: 2rem !important;
-    }
-    /* Hide Header/Footer */
-    header, footer, #MainMenu {display: none !important;}
-    
-    /* Remove default Form styling */
-    [data-testid="stForm"] {border: none !important; padding: 0 !important;}
 
-    /* 2. TYPOGRAPHY */
+    /* REMOVE DEFAULT STREAMLIT PADDING & CHROME */
+    .stApp { background-color: #FFFFFF; }
+    .block-container {
+        max-width: 700px;
+        padding-top: 4rem;
+        padding-bottom: 2rem;
+    }
+    header, footer, #MainMenu { display: none !important; }
+
+    /* HIDE FORM BORDER */
+    [data-testid="stForm"] {
+        border: none;
+        padding: 0;
+        box-shadow: none;
+    }
+
+    /* TYPOGRAPHY */
     h1 {
         color: #000000 !important;
         font-weight: 600 !important;
-        font-size: 32px !important;
+        font-size: 36px !important;
         text-align: center;
+        letter-spacing: -1px;
         margin-bottom: 0.5rem !important;
-        letter-spacing: -0.5px;
     }
-    /* The "Subtitle" text */
     p, .stMarkdown p {
         color: #6F6F6F !important;
         font-size: 16px !important;
         text-align: center;
-        line-height: 1.5;
+        margin-bottom: 2rem;
     }
-    
-    /* 3. INPUT FIELDS (Review & Business Name) */
+
+    /* INPUTS (Text Area & Input) */
     .stTextArea textarea, .stTextInput input {
-        background-color: #FFFFFF !important;
         border: 1px solid #E5E7EB !important;
         border-radius: 12px !important;
         padding: 16px !important;
-        font-size: 15px !important;
-        color: #1F2937 !important;
+        font-size: 16px !important;
+        color: #000000 !important; /* Dark text */
+        background-color: #FFFFFF !important;
         box-shadow: none !important;
     }
-    /* Focus State: The Purpley Blue */
     .stTextArea textarea:focus, .stTextInput input:focus {
         border-color: #7C90FF !important;
-        box-shadow: 0 0 0 3px rgba(124, 144, 255, 0.1) !important;
+        box-shadow: 0 0 0 4px rgba(124, 144, 255, 0.1) !important;
     }
-    .stTextArea textarea::placeholder, .stTextInput input::placeholder {
-        color: #9CA3AF !important;
+    ::placeholder { color: #D1D5DB !important; opacity: 1; }
+
+    /* RADIO BUTTONS (The "Card" Look) */
+    [role="radiogroup"] {
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 30px;
+    }
+    
+    /* The individual label container */
+    [data-testid="stMarkdownContainer"] p {
+        margin-bottom: 0px !important; /* Fix spacing inside cards */
     }
 
-    /* 4. TONE SELECTOR (The "Cards") */
-    /* This transforms the radio buttons into clickable rectangles */
-    div[role="radiogroup"] {
-        gap: 12px;
-        display: flex;
-        justify-content: center;
-        margin-bottom: 24px;
-    }
+    /* This targets the label box */
     div[role="radiogroup"] label {
         background-color: #FFFFFF !important;
         border: 1px solid #E5E7EB !important;
         border-radius: 8px !important;
-        padding: 12px 24px !important;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        
-        /* HACK: Center text and remove the radio circle space */
+        padding: 12px 0px !important; /* Vertical padding */
+        width: 140px !important; /* Fixed width for uniformity */
         display: flex;
-        align-items: center;
         justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
-    
-    /* Hide the default radio circle */
-    div[role="radiogroup"] label > div:first-child {
-        display: none !important;
-    }
-    
-    /* SELECTED STATE (Uses the :has selector) */
-    div[role="radiogroup"] label:has(input:checked) {
-        border-color: #7C90FF !important;
-        background-color: #EEF2FF !important; /* Very faint purple bg */
-        color: #7C90FF !important;
-        font-weight: 600 !important;
-    }
+
     /* Hover State */
     div[role="radiogroup"] label:hover {
         border-color: #7C90FF !important;
         color: #7C90FF !important;
     }
-    /* Force text color inside label */
+
+    /* Selected State (Blue Border + Blue Text) */
+    div[role="radiogroup"] label:has(input:checked) {
+        border-color: #7C90FF !important;
+        color: #7C90FF !important;
+        background-color: #F5F7FF !important;
+    }
+    
+    /* Hide the actual radio circle */
+    div[role="radiogroup"] label > div:first-child {
+        display: none !important;
+    }
+    
+    /* Text inside the radio button */
     div[role="radiogroup"] label p {
+        font-weight: 500 !important;
+        font-size: 15px !important;
         margin: 0 !important;
-        font-size: 14px !important;
+        padding: 0 !important;
         color: inherit !important;
     }
 
-    /* 5. PRIMARY BUTTON (Generate Reply) */
-    div.stButton > button {
+    /* THE GENERATE BUTTON (The specific fix for your screenshot) */
+    [data-testid="stFormSubmitButton"] {
+        display: flex;
+        justify-content: center;
+    }
+    
+    [data-testid="stFormSubmitButton"] button {
         background-color: #7C90FF !important;
         color: white !important;
         border: none !important;
-        border-radius: 8px !important;
-        padding: 14px 24px !important;
+        padding: 14px 40px !important;
         font-size: 16px !important;
         font-weight: 500 !important;
-        width: 100% !important;
-        transition: opacity 0.2s;
-        box-shadow: 0 4px 12px rgba(124, 144, 255, 0.2) !important;
+        border-radius: 8px !important;
+        width: 240px !important; /* Match mockup width */
+        transition: background-color 0.2s;
+        box-shadow: 0 4px 6px -1px rgba(124, 144, 255, 0.3) !important;
     }
-    div.stButton > button:hover {
-        opacity: 0.9;
-        box-shadow: 0 6px 16px rgba(124, 144, 255, 0.3) !important;
-    }
-    div.stButton > button:active {
-        transform: scale(0.99);
+
+    [data-testid="stFormSubmitButton"] button:hover {
+        background-color: #6A7FD6 !important;
     }
     
-    /* RESULT BOX Styling */
+    [data-testid="stFormSubmitButton"] button:active {
+        transform: translateY(1px);
+    }
+    
+    /* Result Box */
     .result-box {
         background-color: #F8FAFC;
-        border: 1px solid #F1F5F9;
+        border: 1px solid #EEF2FF;
         border-radius: 12px;
-        padding: 24px;
-        color: #374151;
+        padding: 32px;
+        color: #334155;
         font-size: 16px;
         line-height: 1.6;
-        margin: 24px 0;
+        margin: 20px 0 40px 0;
+        text-align: center;
     }
 
 </style>
@@ -161,26 +173,25 @@ except:
 
 # 5. UI LOGIC
 
-# --- HOME VIEW ---
 if st.session_state.page == "home":
     
-    # Custom HTML Header to ensure colors match exactly
     st.markdown("<h1>Review responder</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='margin-bottom: 32px;'>Paste a review below to generate a professional reply.</p>", unsafe_allow_html=True)
+    st.markdown("<p>Paste a review below to generate a professional reply.</p>", unsafe_allow_html=True)
 
+    # Use clear_on_submit=False to keep inputs if needed, or True to clear.
     with st.form("main_form", clear_on_submit=False):
         
         # 1. Review Input
         review_text = st.text_area(
             "Review",
-            height=180, 
+            height=200, 
             placeholder="Paste the customer review here...",
             label_visibility="collapsed"
         )
         
         st.write("") # Spacer
         
-        # 2. Business Name Input
+        # 2. Business Name
         business_name = st.text_input(
             "Business Name", 
             placeholder="Add your business name (optional)",
@@ -201,7 +212,7 @@ if st.session_state.page == "home":
         
         st.write("") # Spacer
         
-        # 4. Button
+        # 4. The Button - We use the native form submit but styled via CSS above
         submitted = st.form_submit_button("Generate reply")
         
         if submitted and review_text:
@@ -228,26 +239,25 @@ if st.session_state.page == "home":
             except Exception as e:
                 st.error(f"Error: {e}")
 
-# --- RESULT VIEW ---
 elif st.session_state.page == "result":
     
     st.markdown("<h1>Review responder</h1>", unsafe_allow_html=True)
     st.markdown("<p>Paste a review below to generate a professional reply.</p>", unsafe_allow_html=True)
     
-    st.markdown("<h3 style='text-align: center; color: #000; font-weight: 600; margin-top: 20px;'>Your reply</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #000; font-weight: 600; font-size: 24px; margin-top: 20px;'>Your reply</h3>", unsafe_allow_html=True)
     
-    # The Result Box
+    # Result Display
     st.markdown(f"""
     <div class="result-box">
         {st.session_state.reply}
     </div>
     """, unsafe_allow_html=True)
     
-    # Back Button
-    # We use columns to center the button in Streamlit because st.button is full-width by default in our CSS above
+    # "Reply to Another" Button
+    # We create a centered container for the button
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("Reply to another"):
+        if st.button("Reply to another", type="primary"):
             st.session_state.page = "home"
             st.session_state.reply = ""
             st.rerun()
