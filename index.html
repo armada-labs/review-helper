@@ -101,11 +101,15 @@
             <!-- Generated reply box -->
             <div id="reply-output" class="w-full p-6 bg-primary-light border border-indigo-100 rounded-xl text-dark-text text-base leading-relaxed mb-10"></div>
 
-            <!-- Reply to another button -->
-            <div class="flex justify-center">
+            <!-- Buttons -->
+            <div class="flex justify-center gap-4">
+                <button 
+                    id="copy-btn"
+                    class="bg-primary hover:bg-primary-hover text-white font-medium text-base px-10 py-3.5 rounded-lg shadow-md transition-all"
+                >Copy reply</button>
                 <button 
                     id="reset-btn"
-                    class="bg-primary hover:bg-primary-hover text-white font-medium text-base px-10 py-3.5 rounded-lg shadow-md transition-all"
+                    class="bg-white hover:border-primary text-dark-text font-medium text-base px-10 py-3.5 rounded-lg border border-gray-border transition-all"
                 >Reply to another</button>
             </div>
         </div>
@@ -130,6 +134,7 @@
         const businessName = document.getElementById('business-name');
         const generateBtn = document.getElementById('generate-btn');
         const resetBtn = document.getElementById('reset-btn');
+        const copyBtn = document.getElementById('copy-btn');
         const toneButtons = document.querySelectorAll('.tone-btn');
         const reviewDisplay = document.getElementById('review-display');
         const businessDisplay = document.getElementById('business-display');
@@ -206,6 +211,41 @@
             resultSection.classList.add('hidden');
             inputSection.classList.remove('hidden');
             reviewInput.focus();
+        });
+
+        // Copy reply to clipboard
+        copyBtn.addEventListener('click', async () => {
+            const replyText = replyOutput.textContent;
+            
+            try {
+                await navigator.clipboard.writeText(replyText);
+                
+                // Visual feedback
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                copyBtn.classList.remove('bg-primary', 'hover:bg-primary-hover');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    copyBtn.classList.add('bg-primary', 'hover:bg-primary-hover');
+                }, 2000);
+                
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = replyText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy reply';
+                }, 2000);
+            }
         });
     </script>
 </body>
