@@ -1,29 +1,29 @@
 import streamlit as st
 import anthropic
 
-# 1. Page Config
+# Page config
 st.set_page_config(
     page_title="Review responder",
     page_icon="✨",
     layout="centered"
 )
 
-# 2. Styling
+# Global styles
 st.markdown(
     """
 <style>
     .stApp {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
+        background-color: #ffffff !important;
+        color: #0f172a !important;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-                     "Helvetica Neue", Arial, sans-serif;
+                     -sans-serif;
     }
 
-    /* Tight, centered layout */
+    /* Tighter centered layout */
     .block-container {
         padding-top: 4rem !important;
         padding-bottom: 4rem !important;
-        max-width: 720px !important;
+        max-width: 780px !important;
         margin: 0 auto !important;
     }
 
@@ -32,22 +32,34 @@ st.markdown(
     /* Title and subtitle */
     .app-title {
         text-align: center;
-        font-size: 2.4rem;
-        font-weight: 600;
-        margin-bottom: 0.4rem;
+        font-size: 2.3rem;
+        font-weight: 700;
+        margin-bottom: 0.35rem;
+        color: #020617;
     }
     .app-subtitle {
         text-align: center;
         font-size: 0.98rem;
-        color: #6B7280;
-        margin-bottom: 2.4rem;
+        color: #6b7280;
+        margin-bottom: 2.5rem;
+    }
+
+    /* Card that wraps the whole form */
+    .review-card {
+        max-width: 720px;
+        margin: 0 auto;
+        background: #f9fafb;
+        border-radius: 18px;
+        border: 1px solid #e5e7eb;
+        padding: 24px 24px 20px;
+        box-sizing: border-box;
     }
 
     /* Inputs */
     .stTextArea textarea,
     .stTextInput input {
-        background-color: #FFFFFF !important;
-        border: 1px solid #E5E7EB !important;
+        background-color: #ffffff !important;
+        border: 1px solid #e5e7eb !important;
         border-radius: 12px !important;
         color: #111827 !important;
         padding: 12px 14px !important;
@@ -55,103 +67,117 @@ st.markdown(
     }
     .stTextArea textarea:focus,
     .stTextInput input:focus {
-        border-color: #4F46E5 !important;
-        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.35) !important;
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.35) !important;
     }
 
-    /* Tone buttons as pills */
-    div[role="radiogroup"] {
-        display: flex;
-        justify-content: center;
+    /* Make the second text input sit a little closer to the textarea */
+    .review-card .stTextInput {
+        margin-top: 0.75rem;
+        margin-bottom: 1.1rem;
+    }
+
+    /* Radio buttons styled as pills */
+    .stRadio > div {
+        flex-direction: row !important;
         gap: 12px;
-        margin-top: 0.5rem;
-        margin-bottom: 2rem;
-        flex-wrap: wrap;
-    }
-    div[role="radiogroup"] label {
-        background-color: #F9FAFB !important;
-        border: 1px solid #E5E7EB !important;
-        padding: 8px 22px !important;
-        border-radius: 999px !important;
-        color: #6B7280 !important;
-        font-size: 0.95rem !important;
-        cursor: pointer;
-        transition: all 0.16s ease;
-        margin-right: 0 !important;
-    }
-    div[role="radiogroup"] label:hover {
-        border-color: #4F46E5 !important;
-        background-color: #EEF2FF !important;
-        color: #4F46E5 !important;
     }
 
-    /* Primary button */
+    .stRadio label[data-baseweb="radio"] {
+        background-color: #f9fafb;
+        border-radius: 999px;
+        border: 1px solid #e5e7eb;
+        padding: 8px 22px;
+        font-size: 0.95rem;
+        color: #111827;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .stRadio label[data-baseweb="radio"]:hover {
+        border-color: #6366f1;
+        background-color: #eef2ff;
+    }
+
+    /* Selected pill (uses :has which is supported in modern browsers) */
+    .stRadio label[data-baseweb="radio"]:has(input:checked) {
+        border-color: #6366f1;
+        background-color: #eef2ff;
+    }
+
+    /* Primary outlined buttons (Generate / Reply to another) */
     div.stButton > button:first-child {
-        background-color: #4F46E5 !important;
-        color: #FFFFFF !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 14px 24px !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-        width: 100% !important;
-        margin-top: 0.5rem !important;
-        transition: background-color 0.16s ease, transform 0.08s ease;
+        background-color: #ffffff !important;
+        color: #4f46e5 !important;
+        border-radius: 10px !important;
+        border: 1px solid #a855f7 !important;
+        padding: 10px 18px !important;
+        font-weight: 500 !important;
+        font-size: 0.96rem !important;
+        width: auto !important;
+        transition: background-color 0.12s ease, box-shadow 0.12s ease,
+                    transform 0.06s ease;
     }
     div.stButton > button:first-child:hover {
-        background-color: #4338CA !important;
+        background-color: #f5f3ff !important;
+        box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.4);
         transform: translateY(-1px);
     }
 
-    /* Reply section */
-    .reply-title {
-        text-align: center;
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin: 3rem 0 1rem 0;
+    /* Space above generate button inside card */
+    .review-card div.stButton {
+        margin-top: 1.2rem;
     }
 
+    /* Reply section */
+    .reply-wrapper {
+        max-width: 720px;
+        margin: 3rem auto 0 auto;
+    }
+    .reply-title {
+        text-align: center;
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin-bottom: 1.3rem;
+        color: #020617;
+    }
     .reply-box {
-        background-color: #EEF2FF;
+        background-color: #eef2ff;
         border-radius: 18px;
         padding: 20px 22px;
-        border: 1px solid #E0E7FF;
+        border: 1px solid #e0e7ff;
         font-size: 0.98rem;
         color: #111827;
         line-height: 1.6;
-        margin-bottom: 1.8rem;
+        margin-bottom: 1.6rem;
     }
 
-    .reply-to-another button {
-        width: 220px !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        display: block !important;
-    }
 </style>
 """,
     unsafe_allow_html=True,
 )
 
-# 3. Securely load API Key
+# API client
 try:
     client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
 except Exception:
     st.error("No API key found. Please add ANTHROPIC_API_KEY to your secrets.")
     st.stop()
 
-# 4. Session state for reply
+# Session state for reply
 if "generated_reply" not in st.session_state:
     st.session_state.generated_reply = ""
 
-# 5. Header
+# Header
 st.markdown('<div class="app-title">Review responder</div>', unsafe_allow_html=True)
 st.markdown(
     '<div class="app-subtitle">Paste a review below to generate a professional reply.</div>',
     unsafe_allow_html=True,
 )
 
-# 6. Input form
+# Form inside the card
+st.markdown('<div class="review-card">', unsafe_allow_html=True)
+
 with st.form("review_form", clear_on_submit=False):
     review_text = st.text_area(
         label="Review",
@@ -179,7 +205,9 @@ with st.form("review_form", clear_on_submit=False):
 
     submitted = st.form_submit_button("Generate reply")
 
-# 7. Generate reply
+st.markdown("</div>", unsafe_allow_html=True)
+
+# Call Anthropic and store reply
 if submitted and review_text.strip():
     with st.spinner("Generating your reply"):
         system_prompt = f"""
@@ -210,22 +238,23 @@ Rules:
         except Exception as e:
             st.error(f"Something went wrong: {e}")
 
-# 8. Reply display screen
+# Reply view
 if st.session_state.generated_reply:
+    st.markdown('<div class="reply-wrapper">', unsafe_allow_html=True)
     st.markdown('<div class="reply-title">Your reply</div>', unsafe_allow_html=True)
     st.markdown(
         f'<div class="reply-box">{st.session_state.generated_reply}</div>',
         unsafe_allow_html=True,
     )
 
-    # "Reply to another" button - resets the state
-    col = st.container()
-    with col:
-        if st.button("Reply to another", key="reply_another", help="Start a new reply"):
-            st.session_state.generated_reply = ""
-            st.session_state.review_text = ""
-            st.session_state.business_name = ""
-            try:
-                st.rerun()
-            except Exception:
-                st.experimental_rerun()
+    # Left aligned "Reply to another"
+    if st.button("Reply to another", key="reply_another"):
+        st.session_state.generated_reply = ""
+        st.session_state.review_text = ""
+        st.session_state.business_name = ""
+        try:
+            st.rerun()
+        except Exception:
+            st.experimental_rerun()
+
+    st.markdown("</div>", unsafe_allow_html=True)
