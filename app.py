@@ -2,222 +2,230 @@ import streamlit as st
 import anthropic
 
 # 1. Page Config
-st.set_page_config(page_title="Review Responder", page_icon="✨", layout="centered")
+st.set_page_config(
+    page_title="Review responder",
+    page_icon="✨",
+    layout="centered"
+)
 
-# 2. Session State
-if "page" not in st.session_state:
-    st.session_state.page = "home"
-if "reply" not in st.session_state:
-    st.session_state.reply = ""
-
-# 3. THE "PIXEL PERFECT" CSS
-st.markdown("""
+# 2. Styling
+st.markdown(
+    """
 <style>
-    /* GLOBAL CLEANUP */
     .stApp {
         background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                     "Helvetica Neue", Arial, sans-serif;
     }
+
+    /* Tight, centered layout */
     .block-container {
-        max-width: 680px !important;
         padding-top: 4rem !important;
-        padding-bottom: 2rem !important;
-    }
-    
-    /* REMOVE THE UGLY FORM BORDER */
-    [data-testid="stForm"] {
-        border: 0px solid transparent !important;
-        box-shadow: none !important;
-        padding: 0 !important;
+        padding-bottom: 4rem !important;
+        max-width: 720px !important;
+        margin: 0 auto !important;
     }
 
-    /* TEXT STYLING */
-    h1 {
-        font-family: 'Inter', sans-serif;
-        font-weight: 700 !important;
-        text-align: center !important;
-        font-size: 2.5rem !important;
-        color: #000000 !important;
-        padding-bottom: 0px !important;
+    header, footer, #MainMenu {visibility: hidden !important;}
+
+    /* Title and subtitle */
+    .app-title {
+        text-align: center;
+        font-size: 2.4rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
     }
-    p {
-        text-align: center !important;
-        color: #666666 !important;
-        font-size: 1rem !important;
-        margin-bottom: 2rem !important;
+    .app-subtitle {
+        text-align: center;
+        font-size: 0.98rem;
+        color: #6B7280;
+        margin-bottom: 2.4rem;
     }
 
-    /* INPUT FIELDS (Clean & Soft) */
-    .stTextArea textarea, .stTextInput input {
-        background-color: #FFFFFF !important;
-        border: 1px solid #E5E7EB !important; /* Very light gray */
-        border-radius: 8px !important;
-        color: #111827 !important;
-        font-size: 15px !important;
-        padding: 12px !important;
-        box-shadow: none !important;
-    }
-    .stTextArea textarea:focus, .stTextInput input:focus {
-        border-color: #6366F1 !important; /* Periwinkle focus */
-        box-shadow: 0 0 0 1px #6366F1 !important;
-    }
-
-    /* RADIO BUTTONS (The "Card" Look) */
-    div[role="radiogroup"] {
-        display: flex;
-        justify-content: center; /* Center them */
-        gap: 12px;
-        width: 100%;
-        margin-top: 10px;
-    }
-    
-    /* The individual option container */
-    div[role="radiogroup"] label {
+    /* Inputs */
+    .stTextArea textarea,
+    .stTextInput input {
         background-color: #FFFFFF !important;
         border: 1px solid #E5E7EB !important;
-        border-radius: 8px !important;
-        padding: 12px 24px !important;
-        width: auto !important;
-        flex-grow: 0 !important; /* Don't stretch */
-        transition: all 0.2s;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        border-radius: 12px !important;
+        color: #111827 !important;
+        padding: 12px 14px !important;
+        font-size: 0.98rem !important;
     }
-    
-    /* Hover effect */
-    div[role="radiogroup"] label:hover {
-        border-color: #6366F1 !important;
-        color: #6366F1 !important;
+    .stTextArea textarea:focus,
+    .stTextInput input:focus {
+        border-color: #4F46E5 !important;
+        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.35) !important;
     }
 
-    /* THE BLUE BUTTON (Exact Match) */
-    div.stButton > button {
-        background-color: #6366F1 !important; /* Periwinkle Blue */
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 12px 30px !important;
-        font-size: 16px !important;
-        font-weight: 500 !important;
-        margin: 20px auto 0px auto !important; /* Center horizontally */
-        display: block !important;
-        width: 200px !important;
-        box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3) !important;
+    /* Tone buttons as pills */
+    div[role="radiogroup"] {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 0.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
     }
-    div.stButton > button:hover {
-        background-color: #4F46E5 !important; /* Darker on hover */
+    div[role="radiogroup"] label {
+        background-color: #F9FAFB !important;
+        border: 1px solid #E5E7EB !important;
+        padding: 8px 22px !important;
+        border-radius: 999px !important;
+        color: #6B7280 !important;
+        font-size: 0.95rem !important;
+        cursor: pointer;
+        transition: all 0.16s ease;
+        margin-right: 0 !important;
+    }
+    div[role="radiogroup"] label:hover {
+        border-color: #4F46E5 !important;
+        background-color: #EEF2FF !important;
+        color: #4F46E5 !important;
+    }
+
+    /* Primary button */
+    div.stButton > button:first-child {
+        background-color: #4F46E5 !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 14px 24px !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        width: 100% !important;
+        margin-top: 0.5rem !important;
+        transition: background-color 0.16s ease, transform 0.08s ease;
+    }
+    div.stButton > button:first-child:hover {
+        background-color: #4338CA !important;
         transform: translateY(-1px);
     }
-    div.stButton > button:active {
-        transform: translateY(0px);
+
+    /* Reply section */
+    .reply-title {
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 3rem 0 1rem 0;
     }
-    
-    /* Hide the Streamlit footer/header */
-    header, footer, #MainMenu {display: none !important;}
 
+    .reply-box {
+        background-color: #EEF2FF;
+        border-radius: 18px;
+        padding: 20px 22px;
+        border: 1px solid #E0E7FF;
+        font-size: 0.98rem;
+        color: #111827;
+        line-height: 1.6;
+        margin-bottom: 1.8rem;
+    }
+
+    .reply-to-another button {
+        width: 220px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        display: block !important;
+    }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-# 4. API SETUP
+# 3. Securely load API Key
 try:
     client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
-except:
-    pass
+except Exception:
+    st.error("No API key found. Please add ANTHROPIC_API_KEY to your secrets.")
+    st.stop()
 
-# 5. UI LOGIC
-if st.session_state.page == "home":
-    
-    # Custom Header (Centered)
-    st.markdown("<h1>Review responder</h1>", unsafe_allow_html=True)
-    st.markdown("<p>Paste a review below to generate a professional reply.</p>", unsafe_allow_html=True)
+# 4. Session state for reply
+if "generated_reply" not in st.session_state:
+    st.session_state.generated_reply = ""
 
-    with st.form("main_form", clear_on_submit=False):
-        
-        # Review Input
-        review_text = st.text_area(
-            "Review",
-            height=160, 
-            placeholder="Paste the customer review here...",
-            label_visibility="collapsed"
-        )
-        
-        st.write("") # Spacer
-        
-        # Business Name Input
-        business_name = st.text_input(
-            "Business Name", 
-            placeholder="Add your business name (optional)",
-            label_visibility="collapsed"
-        )
-        
-        st.write("") # Spacer
-        
-        # Tone Header
-        st.markdown("<p style='margin-bottom: 8px !important;'>What tone would you like to reply with?</p>", unsafe_allow_html=True)
-        
-        # Tone Selection
-        tone = st.radio(
-            "Tone", 
-            ["Grateful", "Polite & Firm", "Short"], 
-            horizontal=True,
-            label_visibility="collapsed"
-        )
-        
-        # Submit Button
-        submitted = st.form_submit_button("Generate reply")
-        
-        if submitted and review_text:
+# 5. Header
+st.markdown('<div class="app-title">Review responder</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="app-subtitle">Paste a review below to generate a professional reply.</div>',
+    unsafe_allow_html=True,
+)
+
+# 6. Input form
+with st.form("review_form", clear_on_submit=False):
+    review_text = st.text_area(
+        label="Review",
+        height=150,
+        placeholder="Paste the customer review here...",
+        label_visibility="collapsed",
+        key="review_text",
+    )
+
+    business_name = st.text_input(
+        label="Business name",
+        placeholder="Add your business name (optional)",
+        label_visibility="collapsed",
+        key="business_name",
+    )
+
+    tone = st.radio(
+        "Tone",
+        ["Grateful", "Polite & Firm", "Short"],
+        index=0,
+        horizontal=True,
+        label_visibility="collapsed",
+        key="tone_choice",
+    )
+
+    submitted = st.form_submit_button("Generate reply")
+
+# 7. Generate reply
+if submitted and review_text.strip():
+    with st.spinner("Generating your reply"):
+        system_prompt = f"""
+You are a professional business owner replying to an online review.
+
+Business name: {business_name if business_name else "the business"}
+Tone: {tone}
+
+Write a short, friendly and professional response.
+
+Rules:
+- Be polite, empathetic and clear.
+- Do not mention the name of any review platform.
+- Make it sound natural and human.
+- Keep it under 60 words.
+- Return only the reply text.
+        """.strip()
+
+        try:
+            message = client.messages.create(
+                model="claude-3-haiku-20240307",
+                max_tokens=300,
+                temperature=0.7,
+                system=system_prompt,
+                messages=[{"role": "user", "content": review_text}],
+            )
+            st.session_state.generated_reply = message.content[0].text.strip()
+        except Exception as e:
+            st.error(f"Something went wrong: {e}")
+
+# 8. Reply display screen
+if st.session_state.generated_reply:
+    st.markdown('<div class="reply-title">Your reply</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="reply-box">{st.session_state.generated_reply}</div>',
+        unsafe_allow_html=True,
+    )
+
+    # "Reply to another" button - resets the state
+    col = st.container()
+    with col:
+        if st.button("Reply to another", key="reply_another", help="Start a new reply"):
+            st.session_state.generated_reply = ""
+            st.session_state.review_text = ""
+            st.session_state.business_name = ""
             try:
-                system_prompt = f"""
-                You are a business owner. Write a response to a review.
-                Business Name: {business_name if business_name else 'The Business'}
-                Tone: {tone}
-                Rules: Polite, professional, under 60 words. No platform names.
-                Return ONLY the text.
-                """
-                
-                message = client.messages.create(
-                    model="claude-3-haiku-20240307",
-                    max_tokens=300,
-                    system=system_prompt,
-                    messages=[{"role": "user", "content": review_text}]
-                )
-                
-                st.session_state.reply = message.content[0].text
-                st.session_state.page = "result"
                 st.rerun()
-                
-            except Exception as e:
-                st.error(f"Error: {e}")
-
-elif st.session_state.page == "result":
-    
-    # Header
-    st.markdown("<h1>Review responder</h1>", unsafe_allow_html=True)
-    st.markdown("<p>Paste a review below to generate a professional reply.</p>", unsafe_allow_html=True)
-    
-    # Result Area
-    st.markdown("<h2 style='text-align: center; font-size: 1.8rem; margin-top: 1rem;'>Your reply</h2>", unsafe_allow_html=True)
-    
-    # The Blue Result Box
-    st.markdown(f"""
-    <div style="
-        background-color: #F8FAFC; 
-        border: 1px solid #EEF2FF; 
-        border-radius: 12px; 
-        padding: 30px; 
-        color: #334155; 
-        font-size: 16px; 
-        line-height: 1.6; 
-        margin: 20px 0 40px 0;
-        text-align: left;">
-        {st.session_state.reply}
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Back Button
-    if st.button("Reply to another"):
-        st.session_state.page = "home"
-        st.session_state.reply = ""
-        st.rerun()
+            except Exception:
+                st.experimental_rerun()
