@@ -2,7 +2,7 @@ import streamlit as st
 import anthropic
 
 # 1. Page Config
-st.set_page_config(page_title="Review Responder", layout="centered")
+st.set_page_config(page_title="Review Responder", page_icon="✨", layout="centered")
 
 # 2. Session State
 if "page" not in st.session_state:
@@ -54,36 +54,39 @@ st.markdown("""
         color: #6B7280 !important;
         font-size: 16px !important;
         text-align: center;
-        margin-bottom: 2rem !important;
+        margin-bottom: 2.5rem !important;
     }
 
-    /* INPUTS (Text Area & Input) - with left accent border */
+    /* INPUTS (Text Area & Input) - with drop shadow */
     .stTextArea textarea, .stTextInput input {
         border: 1px solid #E5E7EB !important;
-        border-left: 3px solid #7C90FF !important;
         border-radius: 12px !important;
         padding: 16px 20px !important;
         font-size: 15px !important;
         line-height: 1.6 !important;
         color: #374151 !important;
         background-color: #FFFFFF !important;
-        box-shadow: none !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
     }
     .stTextArea textarea:focus, .stTextInput input:focus {
-        border-color: #E5E7EB !important;
-        border-left-color: #7C90FF !important;
-        box-shadow: 0 0 0 3px rgba(124, 144, 255, 0.1) !important;
+        border-color: #7C90FF !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 3px rgba(124, 144, 255, 0.15) !important;
     }
     .stTextArea textarea::placeholder, .stTextInput input::placeholder { 
         color: #9CA3AF !important; 
         opacity: 1; 
     }
 
-    /* RADIO BUTTONS (The "Card" Look) */
+    /* RADIO BUTTONS CONTAINER - center the whole group */
+    [data-testid="stHorizontalBlock"]:has([role="radiogroup"]) {
+        justify-content: center !important;
+    }
+    
     [role="radiogroup"] {
-        justify-content: center;
-        gap: 12px;
-        margin-bottom: 30px;
+        justify-content: center !important;
+        gap: 16px !important;
+        display: flex !important;
+        width: 100% !important;
     }
     
     /* Fix spacing inside cards */
@@ -96,14 +99,14 @@ st.markdown("""
         background-color: #FFFFFF !important;
         border: 1px solid #E5E7EB !important;
         border-radius: 8px !important;
-        padding: 12px 0px !important;
-        width: 140px !important;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        padding: 12px 24px !important;
+        min-width: 130px !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
         cursor: pointer;
         transition: all 0.2s;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
     }
 
     /* Hover State */
@@ -121,18 +124,30 @@ st.markdown("""
         color: #7C90FF !important;
     }
     
-    /* Hide the actual radio circle */
+    /* Hide the actual radio circle completely */
     div[role="radiogroup"] label > div:first-child {
         display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
-    /* Text inside the radio button */
+    /* Text inside the radio button - ensure centered */
     div[role="radiogroup"] label p {
         font-weight: 500 !important;
         font-size: 15px !important;
         margin: 0 !important;
         padding: 0 !important;
         color: #374151 !important;
+        text-align: center !important;
+        width: 100% !important;
+    }
+    
+    /* Target the inner div that wraps the text */
+    div[role="radiogroup"] label > div:last-child {
+        width: 100% !important;
+        text-align: center !important;
     }
 
     /* TONE QUESTION TEXT */
@@ -140,13 +155,15 @@ st.markdown("""
         color: #6B7280 !important;
         font-size: 15px !important;
         text-align: center;
-        margin-bottom: 16px !important;
+        margin-bottom: 24px !important;
     }
 
-    /* THE GENERATE BUTTON */
+    /* THE GENERATE BUTTON - centered */
     [data-testid="stFormSubmitButton"] {
-        display: flex;
-        justify-content: center;
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+        margin-top: 16px !important;
     }
     
     [data-testid="stFormSubmitButton"] button {
@@ -170,7 +187,12 @@ st.markdown("""
         transform: translateY(1px);
     }
     
-    /* STANDARD BUTTON (Reply to another) */
+    /* STANDARD BUTTON (Reply to another) - centered */
+    .stButton {
+        display: flex !important;
+        justify-content: center !important;
+    }
+    
     .stButton > button[kind="primary"] {
         background-color: #7C90FF !important;
         color: white !important;
@@ -192,7 +214,6 @@ st.markdown("""
     .display-box {
         background-color: #FFFFFF;
         border: 1px solid #E5E7EB;
-        border-left: 3px solid #7C90FF;
         border-radius: 12px;
         padding: 20px 24px;
         color: #374151;
@@ -200,12 +221,12 @@ st.markdown("""
         line-height: 1.6;
         margin-bottom: 16px;
         text-align: left;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
     }
     
     .display-box-single {
         background-color: #FFFFFF;
         border: 1px solid #E5E7EB;
-        border-left: 3px solid #7C90FF;
         border-radius: 12px;
         padding: 14px 24px;
         color: #374151;
@@ -213,13 +234,13 @@ st.markdown("""
         line-height: 1.6;
         margin-bottom: 24px;
         text-align: left;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
     }
     
     /* Result Box (Your Reply section) */
     .result-box {
         background-color: #F8F9FF;
         border: 1px solid #E8EBFF;
-        border-left: 3px solid #7C90FF;
         border-radius: 12px;
         padding: 24px 28px;
         color: #374151;
@@ -227,6 +248,7 @@ st.markdown("""
         line-height: 1.7;
         margin: 16px 0 40px 0;
         text-align: left;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
     }
     
     /* Section heading */
@@ -354,12 +376,10 @@ elif st.session_state.page == "result":
     </div>
     """, unsafe_allow_html=True)
     
-    # "Reply to Another" Button - centered
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("Reply to another", type="primary"):
-            st.session_state.page = "home"
-            st.session_state.reply = ""
-            st.session_state.review_text = ""
-            st.session_state.business_name = ""
-            st.rerun()
+    # "Reply to Another" Button - centered via CSS
+    if st.button("Reply to another", type="primary"):
+        st.session_state.page = "home"
+        st.session_state.reply = ""
+        st.session_state.review_text = ""
+        st.session_state.business_name = ""
+        st.rerun()
