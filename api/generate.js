@@ -31,7 +31,10 @@ export default async function handler(req, res) {
             system: `You are a business owner. Write a response to a customer review.
 Business Name: ${businessName || 'The Business'}
 Tone: ${tone || 'Grateful'}
-Rules: Polite, professional, under 60 words. No platform names like Google, Yelp, etc.
+Rules: 
+- Polite, professional, under 60 words
+- No platform names like Google, Yelp, etc
+- Use British English spelling and phrasing (e.g. colour, apologise, centre, whilst)
 Return ONLY the reply text, nothing else.`,
             messages: [{ role: 'user', content: review }]
         });
