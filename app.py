@@ -2,15 +2,19 @@ import streamlit as st
 import anthropic
 
 # 1. Page Config
-st.set_page_config(page_title="Review Responder", page_icon="✨", layout="centered")
+st.set_page_config(page_title="Review Responder", layout="centered")
 
 # 2. Session State
 if "page" not in st.session_state:
     st.session_state.page = "home"
 if "reply" not in st.session_state:
     st.session_state.reply = ""
+if "review_text" not in st.session_state:
+    st.session_state.review_text = ""
+if "business_name" not in st.session_state:
+    st.session_state.business_name = ""
 
-# 3. CSS INJECTION (The "Bulletproof" Styles)
+# 3. CSS INJECTION
 st.markdown("""
 <style>
     /* IMPORT FONT INTER */
@@ -42,31 +46,38 @@ st.markdown("""
         font-weight: 600 !important;
         font-size: 36px !important;
         text-align: center;
-        letter-spacing: -1px;
+        letter-spacing: -0.5px;
         margin-bottom: 0.5rem !important;
     }
-    p, .stMarkdown p {
-        color: #6F6F6F !important;
+    
+    .subtitle {
+        color: #6B7280 !important;
         font-size: 16px !important;
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 2rem !important;
     }
 
-    /* INPUTS (Text Area & Input) */
+    /* INPUTS (Text Area & Input) - with left accent border */
     .stTextArea textarea, .stTextInput input {
         border: 1px solid #E5E7EB !important;
+        border-left: 3px solid #7C90FF !important;
         border-radius: 12px !important;
-        padding: 16px !important;
-        font-size: 16px !important;
-        color: #000000 !important; /* Dark text */
+        padding: 16px 20px !important;
+        font-size: 15px !important;
+        line-height: 1.6 !important;
+        color: #374151 !important;
         background-color: #FFFFFF !important;
         box-shadow: none !important;
     }
     .stTextArea textarea:focus, .stTextInput input:focus {
-        border-color: #7C90FF !important;
-        box-shadow: 0 0 0 4px rgba(124, 144, 255, 0.1) !important;
+        border-color: #E5E7EB !important;
+        border-left-color: #7C90FF !important;
+        box-shadow: 0 0 0 3px rgba(124, 144, 255, 0.1) !important;
     }
-    ::placeholder { color: #D1D5DB !important; opacity: 1; }
+    .stTextArea textarea::placeholder, .stTextInput input::placeholder { 
+        color: #9CA3AF !important; 
+        opacity: 1; 
+    }
 
     /* RADIO BUTTONS (The "Card" Look) */
     [role="radiogroup"] {
@@ -75,9 +86,9 @@ st.markdown("""
         margin-bottom: 30px;
     }
     
-    /* The individual label container */
+    /* Fix spacing inside cards */
     [data-testid="stMarkdownContainer"] p {
-        margin-bottom: 0px !important; /* Fix spacing inside cards */
+        margin-bottom: 0px !important;
     }
 
     /* This targets the label box */
@@ -85,8 +96,8 @@ st.markdown("""
         background-color: #FFFFFF !important;
         border: 1px solid #E5E7EB !important;
         border-radius: 8px !important;
-        padding: 12px 0px !important; /* Vertical padding */
-        width: 140px !important; /* Fixed width for uniformity */
+        padding: 12px 0px !important;
+        width: 140px !important;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -98,14 +109,16 @@ st.markdown("""
     /* Hover State */
     div[role="radiogroup"] label:hover {
         border-color: #7C90FF !important;
-        color: #7C90FF !important;
     }
 
     /* Selected State (Blue Border + Blue Text) */
     div[role="radiogroup"] label:has(input:checked) {
         border-color: #7C90FF !important;
+        background-color: #F8F9FF !important;
+    }
+    
+    div[role="radiogroup"] label:has(input:checked) p {
         color: #7C90FF !important;
-        background-color: #F5F7FF !important;
     }
     
     /* Hide the actual radio circle */
@@ -119,10 +132,18 @@ st.markdown("""
         font-size: 15px !important;
         margin: 0 !important;
         padding: 0 !important;
-        color: inherit !important;
+        color: #374151 !important;
     }
 
-    /* THE GENERATE BUTTON (The specific fix for your screenshot) */
+    /* TONE QUESTION TEXT */
+    .tone-question {
+        color: #6B7280 !important;
+        font-size: 15px !important;
+        text-align: center;
+        margin-bottom: 16px !important;
+    }
+
+    /* THE GENERATE BUTTON */
     [data-testid="stFormSubmitButton"] {
         display: flex;
         justify-content: center;
@@ -136,9 +157,9 @@ st.markdown("""
         font-size: 16px !important;
         font-weight: 500 !important;
         border-radius: 8px !important;
-        width: 240px !important; /* Match mockup width */
+        width: 200px !important;
         transition: background-color 0.2s;
-        box-shadow: 0 4px 6px -1px rgba(124, 144, 255, 0.3) !important;
+        box-shadow: 0 4px 6px -1px rgba(124, 144, 255, 0.25) !important;
     }
 
     [data-testid="stFormSubmitButton"] button:hover {
@@ -149,17 +170,80 @@ st.markdown("""
         transform: translateY(1px);
     }
     
-    /* Result Box */
-    .result-box {
-        background-color: #F8FAFC;
-        border: 1px solid #EEF2FF;
+    /* STANDARD BUTTON (Reply to another) */
+    .stButton > button[kind="primary"] {
+        background-color: #7C90FF !important;
+        color: white !important;
+        border: none !important;
+        padding: 14px 40px !important;
+        font-size: 16px !important;
+        font-weight: 500 !important;
+        border-radius: 8px !important;
+        width: 200px !important;
+        transition: background-color 0.2s;
+        box-shadow: 0 4px 6px -1px rgba(124, 144, 255, 0.25) !important;
+    }
+    
+    .stButton > button[kind="primary"]:hover {
+        background-color: #6A7FD6 !important;
+    }
+    
+    /* Display boxes (for showing review on result page) */
+    .display-box {
+        background-color: #FFFFFF;
+        border: 1px solid #E5E7EB;
+        border-left: 3px solid #7C90FF;
         border-radius: 12px;
-        padding: 32px;
-        color: #334155;
-        font-size: 16px;
+        padding: 20px 24px;
+        color: #374151;
+        font-size: 15px;
         line-height: 1.6;
-        margin: 20px 0 40px 0;
+        margin-bottom: 16px;
+        text-align: left;
+    }
+    
+    .display-box-single {
+        background-color: #FFFFFF;
+        border: 1px solid #E5E7EB;
+        border-left: 3px solid #7C90FF;
+        border-radius: 12px;
+        padding: 14px 24px;
+        color: #374151;
+        font-size: 15px;
+        line-height: 1.6;
+        margin-bottom: 24px;
+        text-align: left;
+    }
+    
+    /* Result Box (Your Reply section) */
+    .result-box {
+        background-color: #F8F9FF;
+        border: 1px solid #E8EBFF;
+        border-left: 3px solid #7C90FF;
+        border-radius: 12px;
+        padding: 24px 28px;
+        color: #374151;
+        font-size: 15px;
+        line-height: 1.7;
+        margin: 16px 0 40px 0;
+        text-align: left;
+    }
+    
+    /* Section heading */
+    .section-heading {
+        color: #000000;
+        font-weight: 600;
+        font-size: 28px;
         text-align: center;
+        margin-top: 32px;
+        margin-bottom: 16px;
+    }
+    
+    /* Button container */
+    .button-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 16px;
     }
 
 </style>
@@ -176,20 +260,19 @@ except:
 if st.session_state.page == "home":
     
     st.markdown("<h1>Review responder</h1>", unsafe_allow_html=True)
-    st.markdown("<p>Paste a review below to generate a professional reply.</p>", unsafe_allow_html=True)
+    st.markdown("<p class='subtitle'>Paste a review below to generate a professional reply.</p>", unsafe_allow_html=True)
 
-    # Use clear_on_submit=False to keep inputs if needed, or True to clear.
     with st.form("main_form", clear_on_submit=False):
         
         # 1. Review Input
         review_text = st.text_area(
             "Review",
-            height=200, 
+            height=180, 
             placeholder="Paste the customer review here...",
             label_visibility="collapsed"
         )
         
-        st.write("") # Spacer
+        st.write("")
         
         # 2. Business Name
         business_name = st.text_input(
@@ -198,10 +281,10 @@ if st.session_state.page == "home":
             label_visibility="collapsed"
         )
         
-        st.write("") # Spacer
+        st.write("")
         
         # 3. Tone Selector
-        st.markdown("<p style='margin-bottom: 12px !important; font-size: 15px !important;'>What tone would you like to reply with?</p>", unsafe_allow_html=True)
+        st.markdown("<p class='tone-question'>What tone would you like to reply with?</p>", unsafe_allow_html=True)
         
         tone = st.radio(
             "Tone", 
@@ -210,9 +293,9 @@ if st.session_state.page == "home":
             label_visibility="collapsed"
         )
         
-        st.write("") # Spacer
+        st.write("")
         
-        # 4. The Button - We use the native form submit but styled via CSS above
+        # 4. Submit Button
         submitted = st.form_submit_button("Generate reply")
         
         if submitted and review_text:
@@ -233,6 +316,8 @@ if st.session_state.page == "home":
                 )
                 
                 st.session_state.reply = message.content[0].text
+                st.session_state.review_text = review_text
+                st.session_state.business_name = business_name
                 st.session_state.page = "result"
                 st.rerun()
                 
@@ -242,9 +327,25 @@ if st.session_state.page == "home":
 elif st.session_state.page == "result":
     
     st.markdown("<h1>Review responder</h1>", unsafe_allow_html=True)
-    st.markdown("<p>Paste a review below to generate a professional reply.</p>", unsafe_allow_html=True)
+    st.markdown("<p class='subtitle'>Paste a review below to generate a professional reply.</p>", unsafe_allow_html=True)
     
-    st.markdown("<h3 style='text-align: center; color: #000; font-weight: 600; font-size: 24px; margin-top: 20px;'>Your reply</h3>", unsafe_allow_html=True)
+    # Show the original review
+    st.markdown(f"""
+    <div class="display-box">
+        {st.session_state.review_text}
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Show business name if provided
+    if st.session_state.business_name:
+        st.markdown(f"""
+        <div class="display-box-single">
+            {st.session_state.business_name}
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Your Reply heading
+    st.markdown("<h2 class='section-heading'>Your reply</h2>", unsafe_allow_html=True)
     
     # Result Display
     st.markdown(f"""
@@ -253,11 +354,12 @@ elif st.session_state.page == "result":
     </div>
     """, unsafe_allow_html=True)
     
-    # "Reply to Another" Button
-    # We create a centered container for the button
+    # "Reply to Another" Button - centered
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("Reply to another", type="primary"):
             st.session_state.page = "home"
             st.session_state.reply = ""
+            st.session_state.review_text = ""
+            st.session_state.business_name = ""
             st.rerun()
